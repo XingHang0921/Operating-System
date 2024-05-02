@@ -1,0 +1,219 @@
+import java.util.*;
+
+
+//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
+// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+public class Main {
+    /**
+     * @Note The comment section can be used to run a deep down testing on the details on swapping
+     * @param str takes in a str as a input
+     * @return numOfPageFault
+     * @description Using stack to represent the frame that keep track of the pages.
+     *              HashMap to keep track of the current future use index of each possible pages
+     *
+     *              set up the source array for better using to iterate through
+     *
+     *              set up the hashmap for each key as the element in source[] which is the page
+     *                                     and value as a list contain all future occurence of the page
+     *              **Add&Remove**
+     *                  check if the element is not in the frame
+     *                      if true then add the element
+     *                         else remove the best fit candidante and then add the new page
+     *                      either or we need to increment the numOfPageFault.
+     *                  at the end, no matter what, one element in the hashmap has been add to the stack
+     *                  we need to take the occurence of that page out of hashmap
+     *                  for better comparsion for future
+     *
+     */
+    static int optimal(String str){
+        Stack<Integer> stack = new Stack<>();
+        HashMap<Integer, Queue<Integer>> orderedPaging = new HashMap<>();
+
+        int numOfPageFault = 0;
+        int[] source = strToArr(str);
+
+        for(int i = 0; i < source.length; i++){
+            if(!orderedPaging.containsKey(source[i]))
+                orderedPaging.put(source[i], new LinkedList<>());
+            orderedPaging.get(source[i]).offer(i);
+        }
+        //System.out.println(orderedPaging);
+        for(int i = 0; i < source.length; i++){
+            if(!stack.contains(source[i])){
+                if(stack.size() < 4){
+                    stack.add(source[i]);
+                }
+                else{
+                    stack.removeElement(toReplace(orderedPaging,stack));
+                    stack.add(source[i]);
+                }
+                numOfPageFault += 1;
+            }
+            orderedPaging.get(source[i]).remove();
+            //System.out.println(stack + " " + numOfPageFault);
+            //System.out.println(orderedPaging);
+        }
+
+        return numOfPageFault;
+    }
+
+    /**
+     * Note the comment section can be use to run a deep down testing on which condition is being triggered
+     * @param orderedPaging hashmap that keep track of future element and its index
+     * @param stack the occurent frames
+     * @return  the page that should be replaced or will not be used for the longest time
+     * @description set the top of stack to be the one to replace at first
+     *                  -then check if there is no more occurrence of peek at future
+     *                  -then check if there is no more occurrence of each page in stack at the future
+     *                      -if so just return it as toBeReplaced
+     *                  -then we are good for comparsion on the first element of each page's occurrence array
+     *                  ex.[2]   [6]   [4 24]  [3 5]
+     *                  by comparsion the page that hold 6 as its next occurence will be replaced with new element.
+     *
+     */
+    static int toReplace(HashMap<Integer,Queue<Integer>> orderedPaging,Stack<Integer> stack){
+        int toBeReaplaced = stack.peek();
+        for(int element: stack){
+            if(orderedPaging.get(toBeReaplaced).peek() == null){
+                //System.out.println("This is to be deleted 1: " + toBeReaplaced);
+                return toBeReaplaced;
+            }
+            if(orderedPaging.get(element).peek() == null){
+                toBeReaplaced = element;
+                //System.out.println("This is to be deleted 2: " + toBeReaplaced);
+                return toBeReaplaced;
+            }
+            if(orderedPaging.get(element).peek() > orderedPaging.get(toBeReaplaced).peek()){
+                //System.out.println(orderedPaging.get(element).peek() + " > " + orderedPaging.get(toBeReaplaced).peek());
+                toBeReaplaced = element;
+            }
+
+        }
+        //System.out.println("This is to be deleted 3: " + toBeReaplaced);
+        return toBeReaplaced;
+    }
+
+    /**
+     * @Note Comment out section can be used to run a walk through on the process in detail
+     * @param str takes String as input
+     * @return numOfPageFault
+     * @description by combining queue and linkedlist I will be able to add to the end
+     *              and remove from be beginning to achieve the goal of FIFO
+     *
+     *               check if queue contains the element, so no repeated checking later on
+     *                          -check if size is < 4
+     *                              then add
+     *                              increment count
+     *                           else：   (fail if condition, so it has to be overweighted then remove one element)
+     *                              remove from the end
+     *                              then add new element
+     *                              increment count
+     *                         // the increment will only work once for one iteration due to if else condition
+     */
+    static int FIFO(String str){
+        Queue<Integer> queue = new LinkedList<>();
+        int numOfPageFault = 0;
+        int[] source = strToArr(str);
+        for(int i = 0; i < source.length;i++){
+            if(!queue.contains(source[i])) {
+                if (queue.size() < 4) {
+                    queue.offer(source[i]);
+//                    System.out.println(queue);
+//                    System.out.print(source[i] + " ");
+                }
+                else{
+                    queue.remove();
+                    queue.offer(source[i]);
+//                    System.out.println(queue);
+//                    System.out.print(source[i] + " ");
+                }
+                numOfPageFault += 1;
+            }
+        }
+        //System.out.println();
+        return numOfPageFault;
+    }
+
+    /**
+     * @Note code thats comment out can be used to test the code in detail of
+     *       adding element to the first index, remove from the last, and shift
+     *       the element to the first index.
+     * @param str takes in a String as input
+     * @return numOfPageFault
+     * @description Part 1:declaration of structure and variable and setup the
+     *                      source to be iterated after
+     *              Part 2:check if the element is not found:
+     *                          -add to the head if not reaching capacity
+     *                          -increment the result
+     *                          -Why add to the First?: keep on place the new elment
+     *                          at the top so that order is matter along the way
+     *                              -it also makes my life easy on the deletion.
+     *                     else:
+     *                          is full then
+     *                          -remove the last because the last element is the
+     *                              least recently used element,and then
+     *                          -add the new element to the head
+     *                          -increment the result
+     */
+    static int LRU(String str){
+        LinkedList<Integer> ll = new LinkedList<>();
+        int numOfPageFault = 0;
+        int[] source = strToArr(str);   //part 1
+
+        for(int i = 0; i < source.length; i++){
+            if(!ll.contains(source[i])){    //part 2
+                if(ll.size() < 4){
+                    ll.addFirst(source[i]);
+                    //System.out.println(ll + " " + numOfPageFault);
+                }
+                else{
+                    ll.removeLast();
+                    ll.addFirst(source[i]);
+                    //System.out.println(ll + " " + numOfPageFault);
+                }
+                numOfPageFault += 1;
+            }
+            else{   //part 3
+                //System.out.println("item to be removed: " + source[i]);
+                ll.removeFirstOccurrence(source[i]);
+                //System.out.println("item to be added to first index: " + source[i]);
+                ll.addFirst(source[i]);
+                //System.out.println(ll + " " + numOfPageFault);
+            }
+        }
+        return numOfPageFault;
+    }
+
+    /**
+     *
+     * @param str takes in a String as a input
+     * @return  a array of integer
+     * @description This is a helper function for translating the string input to integer array
+     *              it will remove all "," to get ex. [2 1 7 8 9 6 5 8]
+     *              declare a int[] array to hold the result
+     *              translate each element to int by parseInt
+     *              then return the arr at last
+     */
+    static int[] strToArr(String str){
+        String[] tempArr =  str.split(",");
+        int[] arr = new int[tempArr.length];
+        for(int i = 0; i < tempArr.length; i++){
+            arr[i] = Integer.parseInt(tempArr[i]);
+        }
+        return arr;
+    }
+    public static void main(String[] args) {
+        String refStr1 = "2,6,9,2,4,8,1,7,3,0,5,2,1,2,9,5,7,3,8,5";
+        String refStr2 = "0,6,3,0,2,6,3,5,3,4,1,3,5,6,1,4,2,3,5,7";
+        String refStr3 = "3,1,4,2,5,4,4,3,5,2,0,1,1,0,2,3,4,5,0,3";
+        String refStr4 = "4,2,1,7,9,8,3,5,4,6,8,1,0,7,2,4,1,7,5,8";
+
+        String[] refStrs = {refStr1,refStr2,refStr3,refStr4};
+        for(String refStr : refStrs){
+            System.out.println("Page-Reference String: " + "[" + refStr + "]");
+            System.out.println("OPT: " + optimal(refStr) +"     "+
+                    "FIFO: " + FIFO(refStr) +"      "+
+                    "LRU: " + LRU(refStr));
+        }
+    }
+}
